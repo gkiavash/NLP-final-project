@@ -8,11 +8,27 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
 tokenizer = AutoTokenizer.from_pretrained("digitalepidemiologylab/covid-twitter-bert")
-AutoModelForSequenceClassification.from_pretrained()
+
 txt_ = ''
 txt_arr = []
 with open("face_masks_train_retrieved.tsv", encoding='utf-8') as file:
     tsv_file = csv.reader(file, delimiter="\t")
+    tokens = tokenizer(
+        [line[5] for line in tsv_file],
+        padding=True,
+        truncation=True,
+        return_tensors="np"
+    )
+
+    # tokens = tokenizer.encode_plus(
+    #     tuple([line[5] for line in tsv_file]),
+    #     max_length=128,
+    #     truncation=True,
+    #     padding='max_length',
+    #     add_special_tokens=True,
+    #     return_tensors='np'  # pt
+    # )
+
     for line_index, line in enumerate(tsv_file):
 
         # TODO: all texts or perline?
@@ -22,7 +38,7 @@ with open("face_masks_train_retrieved.tsv", encoding='utf-8') as file:
             truncation=True,
             padding='max_length',
             add_special_tokens=True,
-            return_tensors='pt'
+            return_tensors='np'  # pt
         )
 
         print(tokens)
