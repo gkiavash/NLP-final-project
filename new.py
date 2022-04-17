@@ -3,72 +3,113 @@ import numpy as np
 from collections import Counter
 
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from torch import nn
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-from utils import preprocess
+import nn_model_2
+from nn_model_2 import SentimentNet
+from utils import preprocess, load_data
 
 tokenizer = AutoTokenizer.from_pretrained("digitalepidemiologylab/covid-twitter-bert")
 
+train_comments, train_labels = load_data("face_masks_train_retrieved.tsv")
+test_comments, test_labels = load_data("face_masks_test_retrieved.tsv")
 
-with open("face_masks_train_retrieved.tsv", encoding='utf-8') as file:
-    tsv_file = csv.reader(file, delimiter="\t")
-    comments = []
-    labels = []
-    for line_index, line in enumerate(tsv_file):
-        if line_index == 0:
-            continue
-        comments.append(preprocess(line[5]))
-        labels.append(line[4])
-
-
-tokens = tokenizer(
-    comments,
+train_tokens = tokenizer(
+    train_comments,
     padding='max_length',
     max_length=128,
     truncation=True,
     add_special_tokens=True,
-    return_tensors="tf"
+    return_tensors="np"
 )
-print(tokens)
+test_tokens = tokenizer(
+    test_comments,
+    padding='max_length',
+    max_length=128,
+    truncation=True,
+    add_special_tokens=True,
+    return_tensors="np"
+)
+print(train_tokens)
+print(test_tokens)
 
-print(labels)
-count_words = Counter(labels)
+count_words = Counter(train_labels)
 print(count_words.keys())
 print(count_words.values())
 
-print("[INFO] class labels:")
-integer_encoded = LabelEncoder().fit_transform(np.array(labels))
-integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
 
-onehot_encoded = OneHotEncoder(sparse=False).fit_transform(integer_encoded)
-print(onehot_encoded)
-#
-# from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
-#
-# model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=2)
-#
-# from transformers import DataCollatorWithPadding
-#
-# data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
-#
-#
-# training_args = TrainingArguments(
-#     output_dir="./results",
-#     learning_rate=2e-5,
-#     per_device_train_batch_size=16,
-#     per_device_eval_batch_size=16,
-#     num_train_epochs=5,
-#     weight_decay=0.01,
-# )
-#
-# trainer = Trainer(
-#     model=model,
-#     args=training_args,
-#     train_dataset=tokenized_imdb["train"],
-#     eval_dataset=tokenized_imdb["test"],
-#     tokenizer=tokenizer,
-#     data_collator=data_collator,
-# )
-#
-# trainer.train()
-#
+def label_to_one_hot(labels):
+    integer_encoded = LabelEncoder().fit_transform(np.array(labels))
+    integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
+
+    onehot_encoded = OneHotEncoder(sparse=False).fit_transform(integer_encoded)
+    return onehot_encoded
+
+
+train_labels = label_to_one_hot(train_labels)
+test_labels = label_to_one_hot(test_labels)
+
+import torch
+from torch.utils.data import TensorDataset, DataLoader
+
+train_data = TensorDataset(torch.from_numpy(list(train_tokens.values())[0]), torch.from_numpy(train_labels))
+test_data = TensorDataset(torch.from_numpy(list(test_tokens.values())[0]), torch.from_numpy(test_labels))
+
+batch_size = 400
+
+train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
+test_loader = DataLoader(test_data, shuffle=True, batch_size=batch_size)
+
+is_cuda = torch.cuda.is_available()
+dataiter = iter(train_loader)
+sample_x, sample_y = dataiter.next()
+
+print(sample_x.shape, sample_y.shape)
+
+device = nn_model_2.device
+
+# vocab_size = len(word2idx) + 1`
+
+model = SentimentNet(
+    vocab_size=128,
+    output_size=3,
+    embedding_dim=128,
+    hidden_dim=256,
+    n_layers=2
+)
+model.to(device)
+print(model)
+
+lr = 0.005
+criterion = nn.BCELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+nn_model_2.train(
+    model=model,
+    train_loader=train_loader,
+    val_loader=test_loader,
+    batch_size=32,
+    optimizer=optimizer,
+    criterion=criterion,
+)
+model.load_state_dict(torch.load('./state_dict.pt'))
+
+test_losses = []
+num_correct = 0
+h = model.init_hidden(batch_size)
+model.eval()
+for inputs, labels in test_loader:
+    h = tuple([each.data for each in h])
+    inputs, labels = inputs.to(device), labels.to(device)
+    output, h = model(inputs, h)
+    test_loss = criterion(output.squeeze(), labels.float())
+    test_losses.append(test_loss.item())
+    pred = torch.round(output.squeeze())  # rounds the output to 0/1
+    correct_tensor = pred.eq(labels.float().view_as(pred))
+    correct = np.squeeze(correct_tensor.cpu().numpy())
+    num_correct += np.sum(correct)
+
+print("Test loss: {:.3f}".format(np.mean(test_losses)))
+test_acc = num_correct / len(test_loader.dataset)
+print("Test accuracy: {:.3f}%".format(test_acc * 100))
