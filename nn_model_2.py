@@ -14,7 +14,7 @@ else:
 
 
 class SentimentNet(nn.Module):
-    def __init__(self, input_size, output_size, hidden_dim, drop_prob=0.5):
+    def __init__(self, input_size, output_size, hidden_dim):
         super(SentimentNet, self).__init__()
         self.output_size = output_size
         self.hidden_dim = hidden_dim
@@ -43,8 +43,7 @@ class SentimentNet(nn.Module):
         return out
 
 
-def train(model, train_loader, val_loader, batch_size, optimizer, criterion):
-    epochs = 20
+def train(model, train_loader, val_loader, epochs, optimizer, criterion):
     counter = 0
     print_every = 1
     clip = 5

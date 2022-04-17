@@ -20,7 +20,7 @@ def load_data(path_to_csv):
             if line_index == 0:
                 continue
             comments.append(preprocess(line[5]))
-            labels.append(line[4])
+            labels.append(line[2])
     return comments, labels
 
 

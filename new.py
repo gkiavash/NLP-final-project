@@ -56,7 +56,7 @@ from torch.utils.data import TensorDataset, DataLoader
 train_data = TensorDataset(torch.from_numpy(list(train_tokens.values())[0]), torch.from_numpy(train_labels))
 test_data = TensorDataset(torch.from_numpy(list(test_tokens.values())[0]), torch.from_numpy(test_labels))
 
-batch_size = 64
+batch_size = 200
 
 train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
 test_loader = DataLoader(test_data, shuffle=True, batch_size=batch_size)
@@ -74,20 +74,19 @@ device = nn_model_2.device
 model = SentimentNet(
     input_size=128,
     output_size=3,
-    hidden_dim=64,
+    hidden_dim=3,
 )
 model.to(device)
 print(model)
 
-lr = 0.005
-criterion = nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
 nn_model_2.train(
     model=model,
     train_loader=train_loader,
     val_loader=test_loader,
-    batch_size=batch_size,
+    epochs=40,
     optimizer=optimizer,
     criterion=criterion,
 )
