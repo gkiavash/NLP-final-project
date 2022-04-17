@@ -56,7 +56,7 @@ from torch.utils.data import TensorDataset, DataLoader
 train_data = TensorDataset(torch.from_numpy(list(train_tokens.values())[0]), torch.from_numpy(train_labels))
 test_data = TensorDataset(torch.from_numpy(list(test_tokens.values())[0]), torch.from_numpy(test_labels))
 
-batch_size = 400
+batch_size = 64
 
 train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
 test_loader = DataLoader(test_data, shuffle=True, batch_size=batch_size)
@@ -72,11 +72,9 @@ device = nn_model_2.device
 # vocab_size = len(word2idx) + 1`
 
 model = SentimentNet(
-    vocab_size=128,
+    input_size=128,
     output_size=3,
-    embedding_dim=128,
-    hidden_dim=256,
-    n_layers=2
+    hidden_dim=64,
 )
 model.to(device)
 print(model)
@@ -89,7 +87,7 @@ nn_model_2.train(
     model=model,
     train_loader=train_loader,
     val_loader=test_loader,
-    batch_size=32,
+    batch_size=batch_size,
     optimizer=optimizer,
     criterion=criterion,
 )
@@ -97,12 +95,11 @@ model.load_state_dict(torch.load('./state_dict.pt'))
 
 test_losses = []
 num_correct = 0
-h = model.init_hidden(batch_size)
+
 model.eval()
 for inputs, labels in test_loader:
-    h = tuple([each.data for each in h])
     inputs, labels = inputs.to(device), labels.to(device)
-    output, h = model(inputs, h)
+    output = model(inputs)
     test_loss = criterion(output.squeeze(), labels.float())
     test_losses.append(test_loss.item())
     pred = torch.round(output.squeeze())  # rounds the output to 0/1
