@@ -102,6 +102,10 @@ for inputs, labels in test_loader:
     test_loss = criterion(output.squeeze(), labels.float())
     test_losses.append(test_loss.item())
     pred = torch.round(output.squeeze())  # rounds the output to 0/1
+
+    pred_class = torch.argmax(output, dim=1)
+    labels_class = torch.argmax(labels, dim=1)
+
     correct_tensor = pred.eq(labels.float().view_as(pred))
     correct = np.squeeze(correct_tensor.cpu().numpy())
     num_correct += np.sum(correct)
@@ -109,3 +113,13 @@ for inputs, labels in test_loader:
 print("Test loss: {:.3f}".format(np.mean(test_losses)))
 test_acc = num_correct / len(test_loader.dataset)
 print("Test accuracy: {:.3f}%".format(test_acc * 100))
+
+x_len = 0
+
+for i in range(len(list(labels_class))):
+    print(labels_class[i], pred_class[i])
+    if labels_class[i] == pred_class[i]:
+        x_len += 1
+print(x_len, len(labels_class))
+
+
