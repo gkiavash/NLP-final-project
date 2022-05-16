@@ -38,11 +38,16 @@ def label_to_one_hot(labels):
 
 def load_data_all(path_to_csv):
     filenames = os.listdir(path_to_csv)
+
     comments_train = []
     labels_train = []
 
     comments_test = []
     labels_test = []
+
+    comments_val = []
+    labels_val = []
+
     for filename in filenames:
         comments_, labels_ = load_data(os.path.join(path_to_csv, filename))
         if 'train' in filename:
@@ -51,5 +56,12 @@ def load_data_all(path_to_csv):
         elif 'test' in filename:
             comments_test.extend(comments_)
             labels_test.extend(labels_)
-    print(len(comments_train), len(labels_train), len(comments_test), len(labels_test))
-    return comments_train, labels_train, comments_test, labels_test
+        elif 'val' in filename:
+            comments_val.extend(comments_)
+            labels_val.extend(labels_)
+    print(
+        len(comments_train), len(labels_train),
+        len(comments_test), len(labels_test),
+        len(comments_val), len(labels_val)
+    )
+    return comments_train, labels_train, comments_test, labels_test, comments_val, labels_val

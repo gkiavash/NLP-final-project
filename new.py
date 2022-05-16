@@ -12,7 +12,14 @@ tokenizer = AutoTokenizer.from_pretrained("digitalepidemiologylab/covid-twitter-
 
 # train_comments, train_labels = utils.load_data("face_masks_train_retrieved.tsv")
 # test_comments, test_labels = utils.load_data("face_masks_test_retrieved.tsv")
-train_comments, train_labels, test_comments, test_labels = utils.load_data_all("output")
+(
+    train_comments,
+    train_labels,
+    test_comments,
+    test_labels,
+    val_comments,
+    val_labels
+) = utils.load_data_all("output")
 
 train_tokens = tokenizer(
     train_comments,
@@ -30,28 +37,41 @@ test_tokens = tokenizer(
     add_special_tokens=True,
     return_tensors="np"
 )
+val_tokens = tokenizer(
+    val_comments,
+    padding='max_length',
+    max_length=128,
+    truncation=True,
+    add_special_tokens=True,
+    return_tensors="np"
+)
 # Statistics:
-print(train_tokens)
-print(test_tokens)
+# print(train_tokens)
+# print(test_tokens)
 count_words = Counter(train_labels)
 print(count_words.keys(), count_words.values())
 count_words = Counter(test_labels)
+print(count_words.keys(), count_words.values())
+count_words = Counter(val_labels)
 print(count_words.keys(), count_words.values())
 
 
 train_labels = utils.label_to_one_hot(train_labels)
 test_labels = utils.label_to_one_hot(test_labels)
+val_labels = utils.label_to_one_hot(val_labels)
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 train_data = TensorDataset(torch.from_numpy(list(train_tokens.values())[0]), torch.from_numpy(train_labels))
 test_data = TensorDataset(torch.from_numpy(list(test_tokens.values())[0]), torch.from_numpy(test_labels))
+val_data = TensorDataset(torch.from_numpy(list(val_tokens.values())[0]), torch.from_numpy(val_labels))
 
 batch_size = 200
 
 train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
 test_loader = DataLoader(test_data, shuffle=True, batch_size=batch_size)
+val_loader = DataLoader(val_data, shuffle=True, batch_size=batch_size)
 
 is_cuda = torch.cuda.is_available()
 dataiter = iter(train_loader)
@@ -61,12 +81,11 @@ print(sample_x.shape, sample_y.shape)
 
 device = nn_model_2.device
 
-# vocab_size = len(word2idx) + 1`
 
 model = SentimentNet(
     input_size=128,
     output_size=3,
-    hidden_dim=3,
+    hidden_dim=20,
 )
 model.to(device)
 print(model)
@@ -77,8 +96,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 nn_model_2.train(
     model=model,
     train_loader=train_loader,
-    val_loader=test_loader,
-    epochs=5,
+    val_loader=val_loader,
+    epochs=10,
     optimizer=optimizer,
     criterion=criterion,
 )
