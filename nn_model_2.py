@@ -19,9 +19,9 @@ class SentimentNet(nn.Module):
         self.output_size = output_size
         self.hidden_dim = hidden_dim
 
-        self.lstm = nn.LSTM(input_size, hidden_dim)
+        self.lstm = nn.LSTM(input_size, hidden_dim, bidirectional=True)
         self.dropout = nn.Dropout(0.2)
-        self.fc = nn.Linear(hidden_dim, output_size)
+        self.fc = nn.Linear(hidden_dim*2, output_size)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
