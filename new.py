@@ -1,19 +1,18 @@
-import csv
 import numpy as np
 from collections import Counter
 
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from torch import nn
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer
 
 import nn_model_2
 from nn_model_2 import SentimentNet
-from utils import preprocess, load_data
+import utils
 
 tokenizer = AutoTokenizer.from_pretrained("digitalepidemiologylab/covid-twitter-bert")
 
-train_comments, train_labels = load_data("face_masks_train_retrieved.tsv")
-test_comments, test_labels = load_data("face_masks_test_retrieved.tsv")
+# train_comments, train_labels = utils.load_data("face_masks_train_retrieved.tsv")
+# test_comments, test_labels = utils.load_data("face_masks_test_retrieved.tsv")
+train_comments, train_labels, test_comments, test_labels = utils.load_data_all("output")
 
 train_tokens = tokenizer(
     train_comments,
@@ -31,24 +30,17 @@ test_tokens = tokenizer(
     add_special_tokens=True,
     return_tensors="np"
 )
+# Statistics:
 print(train_tokens)
 print(test_tokens)
-
 count_words = Counter(train_labels)
-print(count_words.keys())
-print(count_words.values())
+print(count_words.keys(), count_words.values())
+count_words = Counter(test_labels)
+print(count_words.keys(), count_words.values())
 
 
-def label_to_one_hot(labels):
-    integer_encoded = LabelEncoder().fit_transform(np.array(labels))
-    integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
-
-    onehot_encoded = OneHotEncoder(sparse=False).fit_transform(integer_encoded)
-    return onehot_encoded
-
-
-train_labels = label_to_one_hot(train_labels)
-test_labels = label_to_one_hot(test_labels)
+train_labels = utils.label_to_one_hot(train_labels)
+test_labels = utils.label_to_one_hot(test_labels)
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
@@ -86,7 +78,7 @@ nn_model_2.train(
     model=model,
     train_loader=train_loader,
     val_loader=test_loader,
-    epochs=40,
+    epochs=5,
     optimizer=optimizer,
     criterion=criterion,
 )
