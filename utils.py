@@ -1,5 +1,6 @@
 import csv
 import os
+import preprocessor as p
 
 import numpy as np
 from string import punctuation
@@ -8,6 +9,8 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 def preprocess(text):
     text = text.lower()
+    text = p.tokenize(text)
+
     for punc in punctuation:
         text = text.replace(punc, ' ')
 
