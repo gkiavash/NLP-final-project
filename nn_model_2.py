@@ -123,9 +123,9 @@ def run(train_loader, val_loader, test_loader, epochs, INPUT_LENGTH):
     for inputs, mask, labels in test_loader:
         inputs, labels = inputs.to(device), labels.to(device)
         output = model(inputs)
-        # test_loss = criterion(output.squeeze(), labels.float())
-        # test_losses.append(test_loss.item())
-        # pred = torch.round(output.squeeze())  # rounds the output to 0/1
+        test_loss = criterion(output.squeeze(), labels.float())
+        test_losses.append(test_loss.item())
+        pred = torch.round(output.squeeze())  # rounds the output to 0/1
 
         pred_class = torch.argmax(output, dim=1)
         labels_class = torch.argmax(labels, dim=1)

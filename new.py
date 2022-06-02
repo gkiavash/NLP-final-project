@@ -92,6 +92,6 @@ dataiter = iter(train_loader)
 sample_x, sample_mask, sample_y = dataiter.next()
 print(sample_x.shape, sample_y.shape)
 
-# nn_bert.run(train_loader, val_loader, 10)
-
-nn_model_2.run(train_loader, val_loader, test_loader, epochs=20, INPUT_LENGTH=INPUT_LENGTH)
+nn_bert.run(train_loader, val_loader, 10)
+#
+# nn_model_2.run(train_loader, val_loader, test_loader, epochs=20, INPUT_LENGTH=INPUT_LENGTH)
