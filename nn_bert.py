@@ -9,20 +9,15 @@ import torch.nn as nn
 
 class BERT_Arch(nn.Module):
 
-    def __init__(self):
+    def __init__(self, bert_pre_model):
         super(BERT_Arch, self).__init__()
 
-        self.bert = BertModel.from_pretrained("bert-base-uncased")
-        # freeze all the parameters
-        for param in self.bert.parameters():
-            param.requires_grad = False
-
+        self.bert = bert_pre_model
         self.dropout = nn.Dropout(0.1)
         self.fc1 = nn.Linear(768, 3)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sent_id, mask):
-        print('GOING')
         _, cls_hs = self.bert(sent_id, attention_mask=mask, return_dict=False)
 
         x = self.fc1(cls_hs)
@@ -126,7 +121,12 @@ def run(train_loader, val_loader, epochs):
         device = torch.device("cpu")
         print("GPU not available, CPU used")
 
-    model = BERT_Arch()
+    bert_pre_model = BertModel.from_pretrained("bert-base-uncased")
+    # freeze all the parameters
+    for param in bert_pre_model.parameters():
+        param.requires_grad = False
+
+    model = BERT_Arch(bert_pre_model)
     model = model.to(device)
 
     optimizer = AdamW(model.parameters(), lr=1e-3)

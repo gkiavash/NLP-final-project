@@ -62,7 +62,7 @@ def add_full_text(inputpath, outputpath):
             full_texts[id_idx] = txt
 
     df["full_text"] = full_texts
-    df.to_csv(outputpath, sep="\t", index=False)  # replace output path with expertfile
+    df.to_csv(outputpath, sep="\t", index=False)  # replace dataset_full path with expertfile
 
 
 from os import listdir
@@ -73,4 +73,4 @@ onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 print(onlyfiles)
 
 for path in onlyfiles:
-    add_full_text(os.path.join('dataset', path), os.path.join('output', path))
+    add_full_text(os.path.join('dataset', path), os.path.join('dataset_full', path))

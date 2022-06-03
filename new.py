@@ -14,9 +14,9 @@ INPUT_LENGTH = 128
 
 tokenizer = AutoTokenizer.from_pretrained("digitalepidemiologylab/covid-twitter-bert")
 
-train_comments, train_labels = utils.load_data("face_masks_train_retrieved.tsv")
-test_comments, test_labels = utils.load_data("face_masks_test_retrieved.tsv")
-val_comments, val_labels = utils.load_data("output/face_masks_val.csv")
+train_comments, train_labels = utils.load_data("dataset_full/face_masks_train.csv")
+test_comments, test_labels = utils.load_data("dataset_full/face_masks_test.csv")
+val_comments, val_labels = utils.load_data("dataset_full/face_masks_val.csv")
 
 # (
 #     train_comments,
